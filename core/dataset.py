@@ -39,7 +39,7 @@ class CUB():
             if len(img.shape) == 2:
                 img = np.stack([img] * 3, 2)
             img = Image.fromarray(img, mode='RGB')
-            img = transforms.Scale((600, 600), Image.BILINEAR)(img)
+            img = transforms.Resize((600, 600), Image.BILINEAR)(img)
             img = transforms.RandomCrop(INPUT_SIZE)(img)
             img = transforms.RandomHorizontalFlip()(img)
             img = transforms.ToTensor()(img)
@@ -50,7 +50,7 @@ class CUB():
             if len(img.shape) == 2:
                 img = np.stack([img] * 3, 2)
             img = Image.fromarray(img, mode='RGB')
-            img = transforms.Scale((600, 600), Image.BILINEAR)(img)
+            img = transforms.Resize((600, 600), Image.BILINEAR)(img)
             img = transforms.CenterCrop(INPUT_SIZE)(img)
             img = transforms.ToTensor()(img)
             img = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(img)
