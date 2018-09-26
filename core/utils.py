@@ -4,8 +4,12 @@ import sys
 import time
 import logging
 import platform
+import torch
+from dataset import CUB, Car2000
+from config import DATASET_PATH, BATCH_SIZE, dataloader_num_workers
 
 __all__ = ['progress_bar', 'format_time', 'init_log', 'test_cuda', 'test_cudnn']
+
 # for training on windows, there's no stty size 
 # could raise ValueErrors for unpack not enough value
 system_name = platform.system()
@@ -128,6 +132,28 @@ def test_cudnn():
     x = torch.Tensor([1.0])
     x_cuda = x.cuda()
     print('result of cudnn test examples is:',cudnn.is_acceptable(x_cuda))
+
+def compute_mean_variance(self):
+    """Compute the mean and std value for a certain dataset,
+    
+    make sure parameters are same with train_loader in tran.py
+    """
+    print('Compute mean and variance for training data.')
+    train_data = CUB(
+        root=DATASET_PATH, is_train=True, data_len=None)
+    train_loader = torch.utils.data.DataLoader(
+                train_data, batch_size=BATCH_SIZE, shuffle=False,
+                num_workers=dataloader_num_workers,pin_memory=True)
+    mean = torch.zeros(3)
+    std = torch.zeros(3)
+    for X, _ in train_loader:
+        for d in range(3):
+            mean[d] += X[:, d, :, :].mean()
+            std[d] += X[:, d, :, :].std()
+    mean.div_(len(train_data))
+    std.div_(len(train_data))
+    print(mean)
+    print(std)
 
 if __name__ == '__main__':
     test_cudnn()
