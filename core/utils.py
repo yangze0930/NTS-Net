@@ -3,8 +3,23 @@ import os
 import sys
 import time
 import logging
+import platform
 
-_, term_width = os.popen('stty size', 'r').read().split()
+__all__ = ['progress_bar', 'format_time', 'init_log', 'test_cuda', 'test_cudnn']
+# for training on windows, there's no stty size 
+# could raise ValueErrors for unpack not enough value
+system_name = platform.system()
+term_height, term_width = 0, 0
+if system_name == '':
+    raise SystemError('python cannot identify which system you use')
+if system_name == 'Windows':
+    # to get windows powershell window size
+    # use (Get-Host).UI.RawUI.MaxWindowSize.Width 
+    # or (Get-Host).UI.RawUI.MaxWindowSize.Height
+    term_height, term_width = 73, 120 # these values belong to my powershell window size on my windows system
+elif system_name == 'Linux':
+    _, term_width = os.popen('stty size', 'r').read().split()
+
 term_width = int(term_width)
 
 TOTAL_BAR_LENGTH = 40.
@@ -34,10 +49,11 @@ def progress_bar(current, total, msg=None):
     tot_time = cur_time - begin_time
 
     L = []
+    if msg:
+        L.append(msg + ' | ')
     L.append('  Step: %s' % format_time(step_time))
     L.append(' | Tot: %s' % format_time(tot_time))
-    if msg:
-        L.append(' | ' + msg)
+
 
     msg = ''.join(L)
     sys.stdout.write(msg)
@@ -100,5 +116,18 @@ def init_log(output_dir):
     logging.getLogger('').addHandler(console)
     return logging
 
+def test_cuda():
+    import torch
+    x = torch.Tensor([1.0])
+    x_cuda = x.cuda()
+    print(x_cuda)
+
+def test_cudnn():
+    import torch
+    from torch.backends import cudnn
+    x = torch.Tensor([1.0])
+    x_cuda = x.cuda()
+    print('result of cudnn test examples is:',cudnn.is_acceptable(x_cuda))
+
 if __name__ == '__main__':
-    pass
+    test_cudnn()

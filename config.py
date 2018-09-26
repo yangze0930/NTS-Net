@@ -1,4 +1,4 @@
-BATCH_SIZE = 16
+BATCH_SIZE = 2
 PROPOSAL_NUM = 6
 CAT_NUM = 4
 INPUT_SIZE = (448, 448)  # (w, h)
@@ -7,4 +7,8 @@ WD = 1e-4
 SAVE_FREQ = 1
 resume = ''
 test_model = 'model.ckpt'
-save_dir = '/data_4t/yangz/models/'
+# save_dir = '/data/mltest/train-repositorys/NTS-Net/model'
+save_dir = 'model'
+# DATASET_PATH = '/data/mltest/train-repositorys/NTS-Net/data/CUB_200_2011' # CUB dataset path is under project's path
+DATASET_PATH = 'data/CUB_200_2011'
+dataloader_num_workers = 4
