@@ -5,7 +5,11 @@ import time
 import logging
 import platform
 import torch
-from dataset import CUB, Car2000
+from core.dataset import CUB, Car2000
+
+import sys
+sys.path.append('.')
+
 from config import DATASET_PATH, BATCH_SIZE, dataloader_num_workers
 
 __all__ = ['progress_bar', 'format_time', 'init_log', 'test_cuda', 'test_cudnn']
@@ -133,14 +137,14 @@ def test_cudnn():
     x_cuda = x.cuda()
     print('result of cudnn test examples is:',cudnn.is_acceptable(x_cuda))
 
-def compute_mean_variance(self):
+def compute_mean_variance():
     """Compute the mean and std value for a certain dataset,
     
-    make sure parameters are same with train_loader in tran.py
+    make sure parameters of Car2000 are same with train_loader in tran.py
     """
     print('Compute mean and variance for training data.')
-    train_data = CUB(
-        root=DATASET_PATH, is_train=True, data_len=None)
+    train_data = Car2000(
+        root_path=DATASET_PATH, label_path='data', is_train=True, data_len=None)
     train_loader = torch.utils.data.DataLoader(
                 train_data, batch_size=BATCH_SIZE, shuffle=False,
                 num_workers=dataloader_num_workers,pin_memory=True)
@@ -152,8 +156,11 @@ def compute_mean_variance(self):
             std[d] += X[:, d, :, :].std()
     mean.div_(len(train_data))
     std.div_(len(train_data))
+    print('mean:\n')
     print(mean)
+    print('std:\n')
     print(std)
 
 if __name__ == '__main__':
-    test_cudnn()
+    # test_cudnn()
+    compute_mean_variance()

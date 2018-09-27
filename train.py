@@ -8,10 +8,10 @@ from core import model, dataset
 from core.utils import init_log, progress_bar
 
 def read_dataloader():
-    trainset = dataset.CUB(root=DATASET_PATH, is_train=True, data_len=None)
+    trainset = dataset.Car2000(root_path=DATASET_PATH, label_path='data', is_train=True, data_len=None)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE,
                                             shuffle=True, num_workers=dataloader_num_workers, drop_last=False)
-    testset = dataset.CUB(root=DATASET_PATH, is_train=False, data_len=None)
+    testset = dataset.Car2000(root_path=DATASET_PATH, label_path= 'data', is_train=False, data_len=None)
     testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE,
                                             shuffle=False, num_workers=dataloader_num_workers, drop_last=False)
     return trainloader, testloader
