@@ -5,19 +5,19 @@ import torch.utils.data
 from torch.nn import DataParallel
 from torch.optim.lr_scheduler import MultiStepLR
 
-from config import (BATCH_SIZE, DATASET_PATH, LR, PROPOSAL_NUM, SAVE_FREQ, WD,
-                    dataloader_num_workers, own_dataset, resume, save_dir)
+from config import (BATCH_SIZE, dataset_path, LR, PROPOSAL_NUM, SAVE_FREQ, WD,
+                    NUM_WORKERS, OWN_DATASET, resume, save_dir)
 from core import dataset, model
 from core.utils import init_log, progress_bar
 
 
 def read_own_dataloader():
-    trainset = dataset.OwnDataset(root_path=DATASET_PATH, label_path='data', is_train=True, data_len=None)
+    trainset = dataset.OwnDataset(root_path=dataset_path, label_path='data', is_train=True, data_len=None)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE,
-                                            shuffle=True, num_workers=dataloader_num_workers, drop_last=False)
-    testset = dataset.OwnDataset(root_path=DATASET_PATH, label_path= 'data', is_train=False, data_len=None)
+                                            shuffle=True, num_workers=NUM_WORKERS, drop_last=False)
+    testset = dataset.OwnDataset(root_path=dataset_path, label_path= 'data', is_train=False, data_len=None)
     testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE,
-                                            shuffle=False, num_workers=dataloader_num_workers, drop_last=False)
+                                            shuffle=False, num_workers=NUM_WORKERS, drop_last=False)
     return trainloader, testloader
 
 if __name__ == '__main__':
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     print('Read dataset')
     
     # read dataset    
-    if own_dataset:
+    if OWN_DATASET:
         trainloader, testloader = read_own_dataloader()
     else:
         trainset = dataset.CUB(root='./CUB_200_2011', is_train=True, data_len=None)

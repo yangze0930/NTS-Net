@@ -58,7 +58,7 @@ class attention_net(nn.Module):
             for x in rpn_score.data.cpu().numpy()]
         top_n_cdds = [hard_nms(x, topn=self.topN, iou_thresh=0.25) for x in all_cdds]
         top_n_cdds = np.array(top_n_cdds)
-        top_n_index = top_n_cdds[:, :, -1].astype(np.int64) # change np.int to np.int64,parameter index of torch.gather() appoint longtensortype when change num_worker to 4
+        top_n_index = top_n_cdds[:, :, -1].astype(np.int64) # when running code, here went a error, change np.int to np.int64,parameter index of torch.gather() appoint longtensortype when change num_worker to 4,then it runs on windows or linux correctly
         top_n_index = torch.from_numpy(top_n_index).cuda()
         top_n_prob = torch.gather(rpn_score, dim=1, index=top_n_index)
         part_imgs = torch.zeros([batch, self.topN, 3, 224, 224]).cuda()

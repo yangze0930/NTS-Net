@@ -70,10 +70,9 @@ class CUB():
 
 class OwnDataset():
     '''Define your own data reading class here, 
-    we promise to divide the data set into two parts, 
-    train, test two sub data sets
+    we promise to divide the data set into two parts, train, test two sub data sets
     
-    the data structure as follows:
+    the folder structure as follows:
 
     ./dataset
         /train
@@ -140,6 +139,19 @@ class OwnDataset():
             return len(self.test_label)
 
 if __name__ == '__main__':
+    # test on CUB dataset
+    dataset = CUB(root='./CUB_200_2011')
+    print(len(dataset.train_img))
+    print(len(dataset.train_label))
+    for data in dataset:
+        print(data[0].size(), data[1])
+    dataset = CUB(root='./CUB_200_2011', is_train=False)
+    print(len(dataset.test_img))
+    print(len(dataset.test_label))
+    for data in dataset:
+        print(data[0].size(), data[1])
+    
+    # test on your own dataset
     dataset = OwnDataset(root_path='path/to/dataset', label_path='data',is_train=True)
     print(len(dataset.train_image_paths))
     print(len(dataset.train_label))
@@ -150,3 +162,6 @@ if __name__ == '__main__':
     print(len(dataset.test_label))
     for data in dataset:
         print(data[0].size(), data[1])
+    
+    
+    

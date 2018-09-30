@@ -1,4 +1,4 @@
-/data/path/to/your/own/data/image01
-/data/path/to/your/own/data/image02
-/data/path/to/your/own/data/image03
-/data/path/to/your/own/data/image04
+/data/path/to/your/own/train/data/image01
+/data/path/to/your/own/train/data/image02
+/data/path/to/your/own/train/data/image03
+/data/path/to/your/own/train/data/image04
