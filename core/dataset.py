@@ -69,9 +69,11 @@ class CUB():
 
 
 class Car2000():
-    '''在这里，定义自己的数据读取类，我们约定将数据集划分为三个部分，train, val, test三个子数据集
+    '''Define your own data reading class here, 
+    we promise to divide the data set into two parts, 
+    train, test two sub data sets
     
-    数据集结构如下：
+    the data structure as follows:
 
     ./dataset
         /train
@@ -97,11 +99,8 @@ class Car2000():
             self.test_label = [int(x) for x in y_test][:data_len]
 
     def read_txt(self):
-        '''读取存放有label和image_path的txt文件，并返回列表结果
-        
-        注意：编码格式的转换
-        
-        '''
+        """read txt file containing label and IMAGE_PATH,and return list result
+        """
         train_image_paths = [x.decode().replace('\r\n', '') for x in open(os.path.join(self.label_path, 'X_train.txt'), 'rb').readlines()]
         train_labels = [int(x) for x in open(os.path.join(self.label_path, 'y_train.txt'), 'rb').readlines()]
         
@@ -120,7 +119,6 @@ class Car2000():
             img = transforms.RandomCrop(INPUT_SIZE)(img)
             img = transforms.RandomHorizontalFlip()(img)
             img = transforms.ToTensor()(img)
-            # img = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(img)
             img = transforms.Normalize(MEAN, STD)(img)
 
         else:
@@ -131,7 +129,6 @@ class Car2000():
             img = transforms.Resize((600, 600), Image.BILINEAR)(img)
             img = transforms.CenterCrop(INPUT_SIZE)(img)
             img = transforms.ToTensor()(img)
-            # img = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(img)
             img = transforms.Normalize(MEAN, STD)(img)
 
         return img, target
@@ -143,18 +140,13 @@ class Car2000():
             return len(self.test_label)
 
 if __name__ == '__main__':
-    dataset = Car2000(root_path='E:/car-classify-dataset/small_dataset', label_path='data',is_train=True)
+    dataset = Car2000(root_path='path/to/dataset', label_path='data',is_train=True)
     print(len(dataset.train_image_paths))
     print(len(dataset.train_label))
     for data in dataset:
         print(data[0].size(), data[1])
-    dataset = Car2000(root_path='E:/car-classify-dataset/small_dataset', label_path='data',is_train=False)
+    dataset = Car2000(root_path='path/to/dataset', label_path='data',is_train=False)
     print(len(dataset.test_image_paths))
     print(len(dataset.test_label))
     for data in dataset:
         print(data[0].size(), data[1])
-    # X_train, y_train, X_test, y_test = dataset.read_txt()
-    # print(X_train[:10])
-    # print(y_train[:10])
-    # print(X_test[:10])
-    # print(y_test[:10])

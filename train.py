@@ -27,14 +27,9 @@ if __name__ == '__main__':
     _print = logging.info
     print('Finished makdir save_model and create log instance')
     print('Read dataset')
-    # read dataset
-    # trainset = dataset.CUB(root=DATASET_PATH, is_train=True, data_len=None)
-    # trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE,
-    #                                         shuffle=True, num_workers=dataloader_num_workers, drop_last=False)
-    # testset = dataset.CUB(root=DATASET_PATH, is_train=False, data_len=None)
-    # testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE,
-    #                                         shuffle=False, num_workers=dataloader_num_workers, drop_last=False)
+    
     trainloader, testloader = read_dataloader()
+    
     # define model
     print('define model')
     net = model.attention_net(topN=PROPOSAL_NUM)
@@ -58,6 +53,7 @@ if __name__ == '__main__':
                 MultiStepLR(concat_optimizer, milestones=[60, 100], gamma=0.1),
                 MultiStepLR(part_optimizer, milestones=[60, 100], gamma=0.1),
                 MultiStepLR(partcls_optimizer, milestones=[60, 100], gamma=0.1)]
+    
     net = net.cuda()
     net = DataParallel(net)
     print('start training')
