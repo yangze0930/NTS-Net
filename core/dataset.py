@@ -68,7 +68,7 @@ class CUB():
             return len(self.test_label)
 
 
-class Car2000():
+class OwnDataset():
     '''Define your own data reading class here, 
     we promise to divide the data set into two parts, 
     train, test two sub data sets
@@ -140,12 +140,12 @@ class Car2000():
             return len(self.test_label)
 
 if __name__ == '__main__':
-    dataset = Car2000(root_path='path/to/dataset', label_path='data',is_train=True)
+    dataset = OwnDataset(root_path='path/to/dataset', label_path='data',is_train=True)
     print(len(dataset.train_image_paths))
     print(len(dataset.train_label))
     for data in dataset:
         print(data[0].size(), data[1])
-    dataset = Car2000(root_path='path/to/dataset', label_path='data',is_train=False)
+    dataset = OwnDataset(root_path='path/to/dataset', label_path='data',is_train=False)
     print(len(dataset.test_image_paths))
     print(len(dataset.test_label))
     for data in dataset:

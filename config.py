@@ -12,4 +12,5 @@ test_model = 'model.ckpt'
 save_dir = 'model'
 DATASET_PATH = 'path/to/dataset'
 dataloader_num_workers = 4
-FC_NUMS = 2000 # fc nums correspond to classes over your dataset
+FC_NUMS = 200 # fc nums correspond to classes over your dataset
+own_dataset = False

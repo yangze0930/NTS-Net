@@ -1,17 +1,21 @@
 import os
+from datetime import datetime
+
 import torch.utils.data
 from torch.nn import DataParallel
-from datetime import datetime
 from torch.optim.lr_scheduler import MultiStepLR
-from config import BATCH_SIZE, PROPOSAL_NUM, SAVE_FREQ, LR, WD, resume, save_dir, DATASET_PATH, dataloader_num_workers
-from core import model, dataset
+
+from config import (BATCH_SIZE, DATASET_PATH, LR, PROPOSAL_NUM, SAVE_FREQ, WD,
+                    dataloader_num_workers, own_dataset, resume, save_dir)
+from core import dataset, model
 from core.utils import init_log, progress_bar
 
-def read_dataloader():
-    trainset = dataset.Car2000(root_path=DATASET_PATH, label_path='data', is_train=True, data_len=None)
+
+def read_own_dataloader():
+    trainset = dataset.OwnDataset(root_path=DATASET_PATH, label_path='data', is_train=True, data_len=None)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE,
                                             shuffle=True, num_workers=dataloader_num_workers, drop_last=False)
-    testset = dataset.Car2000(root_path=DATASET_PATH, label_path= 'data', is_train=False, data_len=None)
+    testset = dataset.OwnDataset(root_path=DATASET_PATH, label_path= 'data', is_train=False, data_len=None)
     testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE,
                                             shuffle=False, num_workers=dataloader_num_workers, drop_last=False)
     return trainloader, testloader
@@ -28,8 +32,16 @@ if __name__ == '__main__':
     print('Finished makdir save_model and create log instance')
     print('Read dataset')
     
-    trainloader, testloader = read_dataloader()
-    
+    # read dataset    
+    if own_dataset:
+        trainloader, testloader = read_own_dataloader()
+    else:
+        trainset = dataset.CUB(root='./CUB_200_2011', is_train=True, data_len=None)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE,
+                                                shuffle=True, num_workers=8, drop_last=False)
+        testset = dataset.CUB(root='./CUB_200_2011', is_train=False, data_len=None)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE,
+                                                shuffle=False, num_workers=8, drop_last=False)
     # define model
     print('define model')
     net = model.attention_net(topN=PROPOSAL_NUM)
