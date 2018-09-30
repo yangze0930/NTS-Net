@@ -39,7 +39,7 @@ Y_rain.txt shows as follows
 2
 ```
 
-Your label_map file is placed in the data folder,
+Your label_map file should be placed in the data folder,
 ```
 label01,1
 label02,2
@@ -47,23 +47,23 @@ label03,3
 label04,4
 ```
 
-3. Modify `FC_NUMS` in config.py to the total number of classes in your dataset, and `DATASET_PATH` as the path to your dataset.
+3. Modify ``FC_NUMS`` in config.py to the total number of classes in your dataset, and ``DATASET_PATH`` as the path to your dataset.
 
 4. Before training, please calculate the mean and variance on the dataset. just run
 ```
 Python core/utils.py
 ```
 
-Then modify the `MEAN` and `STD` in config.py
+Then modify the ``MEAN`` and ``STD`` in config.py
 
-5. Confirm your model save location and modify the `save_dir` field in config.py to adjust the value of the `batch_size` and `dataloader_num_workers` parameters for your machine. You can modify it in config.py.
+5. Confirm your model save location and modify the ``save_dir`` field in config.py to adjust the value of the ``batch_size`` and ``dataloader_num_workers`` parameters for your machine. You can modify it in config.py.
 
-6. modify the `own_dataset` as `True` in config.py, run `python train.py` to start training your own dataset.
+6. modify the ``own_dataset`` as ``True`` in config.py, run ``python train.py`` to start training your own dataset.
 
 note:
 
 If your machine is multi-GPU, you can modify it in train.py
-`Os.environ['CUDA_VISIBLE_DEVICES'] = '0'`, refer to the official pytorch documentation
+``Os.environ['CUDA_VISIBLE_DEVICES'] = '0'``, refer to the official pytorch documentation
 
 ## Model
 We also provide the checkpoint model trained by ourselves, you can download it from [here](https://drive.google.com/file/d/1F-eKqPRjlya5GH2HwTlLKNSPEUaxCu9H/view?usp=sharing). If you test on our provided model, you will get a 87.6% test accuracy.
