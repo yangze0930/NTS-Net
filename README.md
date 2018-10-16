@@ -1,6 +1,6 @@
 # NTS-Net
 
-This is a PyTorch implementation of the ECCV2018 paper "Learning to Navigate for Fine-grained Classification" (Ze Yang, Tiange Luo, Dong Wang, Zhiqiang Hu, Jun Gao, Liwei Wang).
+This is a PyTorch implementation of the ECCV2018 paper "Learning to Navigate for Fine-grained Classification" (Ze Yang, Tiange Luo, Dong Wang, Zhiqiang Hu, Jun Gao, Liwei Wang).you can find original repository from github.com/yangze0930/NTS-Net
 
 ## Requirements
 - python 3+
@@ -10,12 +10,26 @@ This is a PyTorch implementation of the ECCV2018 paper "Learning to Navigate for
 
 ## Datasets
 Download the [CUB-200-2011](http://www.vision.caltech.edu/visipedia-data/CUB-200-2011/CUB_200_2011.tgz) datasets and put it in the root directory named **CUB_200_2011**, You can also try other fine-grained datasets.
-
+## your own dataset
+I recoomand taht your dataset should be like  as below:
+```
+dataset
+|---images
+|-------image01
+|-------image02
+|-------....
+|---X_train.txt
+|---X_test.txt
+|---y_train.txt
+|---y_test.txt
+```
 ## Train the model
 If you want to train the NTS-Net, just run ``python train.py``. You may need to change the configurations in ``config.py``. The parameter ``PROPOSAL_NUM`` is ``M`` in the original paper and the parameter ``CAT_NUM`` is ``K`` in the original paper. During training, the log file and checkpoint file will be saved in ``save_dir`` directory. You can change the parameter ``resume`` to choose the checkpoint model to resume.
 
 ## Test the model
-If you want to test the NTS-Net, just run ``python test.py``. You need to specify the ``test_model`` in ``config.py`` to choose the checkpoint model for testing.
+The test.py doesn't work on your own dataset, I will make it soon.
+And also,I am glad to see that anybody could contribute to this repository.
+If you want to test the NTS-Net on ``CUB`` dataset, just run ``python test.py``. You need to specify the ``test_model`` in ``config.py`` to choose the checkpoint model for testing.
 
 ## Train your own model
 
@@ -66,7 +80,7 @@ If your machine is multi-GPU, you can modify it in train.py
 ``Os.environ['CUDA_VISIBLE_DEVICES'] = '0'``, refer to the official pytorch documentation
 
 ## Model
-We also provide the checkpoint model trained by ourselves, you can download it from [here](https://drive.google.com/file/d/1F-eKqPRjlya5GH2HwTlLKNSPEUaxCu9H/view?usp=sharing). If you test on our provided model, you will get a 87.6% test accuracy.
+the official repository provides a checkpoint model trained by author ``yangze0930``,please check [here](https://drive.google.com/file/d/1F-eKqPRjlya5GH2HwTlLKNSPEUaxCu9H/view?usp=sharing) to get model.If you test on provided model, you will get a 87.6% test accuracy as paper shows.
 
 ## TODO
 - [ ] add densenet as feature extractor, it will be soon
