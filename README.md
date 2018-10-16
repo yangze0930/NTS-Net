@@ -88,7 +88,6 @@ the official repository provides a checkpoint model trained by author ``yangze09
 - [ ] add squeezenet and mobilenet as feature extractor once I have enough time
 
 ## Reference
-If you are interested in our work and want to cite it, please acknowledge the following paper:
 
 ```
 @inproceedings{Yang2018Learning,
