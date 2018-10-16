@@ -11,7 +11,7 @@ This is a PyTorch implementation of the ECCV2018 paper "Learning to Navigate for
 ## Datasets
 Download the [CUB-200-2011](http://www.vision.caltech.edu/visipedia-data/CUB-200-2011/CUB_200_2011.tgz) datasets and put it in the root directory named **CUB_200_2011**, You can also try other fine-grained datasets.
 ## your own dataset
-I recoomand taht your dataset should be like  as below:
+I recommend taht your dataset should be like as below:
 ```
 dataset
 |---images
