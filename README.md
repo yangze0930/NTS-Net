@@ -45,7 +45,7 @@ X_train.txt shows as follows
 /data/path/to/your/own/data/image04
 ```
 
-Y_rain.txt shows as follows
+y_rain.txt shows as follows
 ```
 1
 1
