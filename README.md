@@ -68,6 +68,11 @@ If your machine is multi-GPU, you can modify it in train.py
 ## Model
 We also provide the checkpoint model trained by ourselves, you can download it from [here](https://drive.google.com/file/d/1F-eKqPRjlya5GH2HwTlLKNSPEUaxCu9H/view?usp=sharing). If you test on our provided model, you will get a 87.6% test accuracy.
 
+## TODO
+- [ ] add densenet as feature extractor, it will be soon
+- [ ] edit test.py to test on own trained model and dataset, it will be soon
+- [ ] add squeezenet and mobilenet as feature extractor once I have enough time
+
 ## Reference
 If you are interested in our work and want to cite it, please acknowledge the following paper:
 
