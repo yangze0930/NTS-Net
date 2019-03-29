@@ -24,7 +24,7 @@ net = net.cuda()
 net = DataParallel(net)
 creterion = torch.nn.CrossEntropyLoss()
 
-##########################  evaluate net on train set  ###############################
+# evaluate on train set
 train_loss = 0
 train_correct = 0
 total = 0
@@ -48,8 +48,8 @@ train_acc = float(train_correct) / total
 train_loss = train_loss / total
 print('train set loss: {:.3f} and train set acc: {:.3f} total sample: {}'.format(train_loss, train_acc, total))
 
-##########################  evaluate net on test set  ###############################
 
+# evaluate on test set
 test_loss = 0
 test_correct = 0
 total = 0
