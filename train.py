@@ -51,7 +51,8 @@ net = DataParallel(net)
 for epoch in range(start_epoch, 500):
     for scheduler in schedulers:
         scheduler.step()
-    ##########################  train the model  ###############################
+
+    # begin training
     _print('--' * 50)
     net.train()
     for i, data in enumerate(trainloader):
@@ -79,9 +80,7 @@ for epoch in range(start_epoch, 500):
         partcls_optimizer.step()
         progress_bar(i, len(trainloader), 'train')
 
-    ##########################  evaluate net and save model  ###############################
     if epoch % SAVE_FREQ == 0:
-        ##########################  evaluate net on test set  ###############################
         train_loss = 0
         train_correct = 0
         total = 0
@@ -110,7 +109,7 @@ for epoch in range(start_epoch, 500):
                 train_acc,
                 total))
 
-        ##########################  evaluate net on test set  ###############################
+	# evaluate on test set
         test_loss = 0
         test_correct = 0
         total = 0
@@ -137,7 +136,7 @@ for epoch in range(start_epoch, 500):
                 test_acc,
                 total))
 
-        ##########################  save model  ###############################
+	# save model
         net_state_dict = net.module.state_dict()
         if not os.path.exists(save_dir):
             os.mkdir(save_dir)
