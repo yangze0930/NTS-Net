@@ -16,13 +16,18 @@ os.makedirs(save_dir)
 logging = init_log(save_dir)
 _print = logging.info
 
+DATESET_PATH = "./rgb"
 # read dataset
-trainset = dataset.CUB(root='./CUB_200_2011', is_train=True, data_len=None)
+_print('--' * 50)
+_print("start loading trainset")
+trainset = dataset.CUB(root=DATESET_PATH, is_train=True, data_len=None)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE,
-                                          shuffle=True, num_workers=8, drop_last=False)
-testset = dataset.CUB(root='./CUB_200_2011', is_train=False, data_len=None)
+                                          shuffle=True, num_workers=4, drop_last=False)
+_print('--' * 50)
+_print("start loading testset")
+testset = dataset.CUB(root=DATESET_PATH, is_train=False, data_len=None)
 testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE,
-                                         shuffle=False, num_workers=8, drop_last=False)
+                                         shuffle=False, num_workers=4, drop_last=False)
 # define model
 net = model.attention_net(topN=PROPOSAL_NUM)
 if resume:
@@ -51,7 +56,6 @@ net = DataParallel(net)
 for epoch in range(start_epoch, 500):
     for scheduler in schedulers:
         scheduler.step()
-
     # begin training
     _print('--' * 50)
     net.train()
@@ -71,7 +75,6 @@ for epoch in range(start_epoch, 500):
         rank_loss = model.ranking_loss(top_n_prob, part_loss)
         partcls_loss = creterion(part_logits.view(batch_size * PROPOSAL_NUM, -1),
                                  label.unsqueeze(1).repeat(1, PROPOSAL_NUM).view(-1))
-
         total_loss = raw_loss + rank_loss + concat_loss + partcls_loss
         total_loss.backward()
         raw_optimizer.step()
