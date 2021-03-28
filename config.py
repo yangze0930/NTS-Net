@@ -1,6 +1,7 @@
+NUM_CLASS = 7 #class 数量
 BATCH_SIZE = 16
-PROPOSAL_NUM = 6
-CAT_NUM = 4
+PROPOSAL_NUM = 5 # M
+CAT_NUM = 3 # K
 INPUT_SIZE = (448, 448)  # (w, h)
 LR = 0.001
 WD = 1e-4
