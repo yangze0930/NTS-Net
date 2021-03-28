@@ -18,13 +18,9 @@ _print = logging.info
 
 DATESET_PATH = "./rgb"
 # read dataset
-_print('--' * 50)
-_print("start loading trainset")
 trainset = dataset.CUB(root=DATESET_PATH, is_train=True, data_len=None)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE,
                                           shuffle=True, num_workers=4, drop_last=False)
-_print('--' * 50)
-_print("start loading testset")
 testset = dataset.CUB(root=DATESET_PATH, is_train=False, data_len=None)
 testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE,
                                          shuffle=False, num_workers=4, drop_last=False)
