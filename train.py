@@ -16,7 +16,7 @@ os.makedirs(save_dir)
 logging = init_log(save_dir)
 _print = logging.info
 
-DATESET_PATH = "./optic_flow"
+DATESET_PATH = "./rgb"
 # read dataset
 trainset = dataset.CUB(root=DATESET_PATH, is_train=True, data_len=None)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE,
@@ -26,8 +26,7 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE,
                                          shuffle=False, num_workers=4, drop_last=False)
 # define model
 net = model.attention_net(topN=PROPOSAL_NUM)
-_print("--"*50)
-_print("net: ", net)
+
 
 if resume:
     ckpt = torch.load(resume)
@@ -67,20 +66,22 @@ for epoch in range(start_epoch, 5):
         partcls_optimizer.zero_grad()
 
         raw_logits, concat_logits, part_logits, _, top_n_prob = net(img)
-        _print("--"*50)
-        _print("raw_logits shape: ", raw_logits.shape)
-        _print("--"*50)
-        _print("concat_logits shape: ", concat_logits.shape)
-        _print("--"*50)
-        _print("part_logits shape: ", part_logits.shape)
-        _print("--"*50)
-        _print("top_n_prob shape: ", top_n_prob.shape)
-        
+        #raw_logits: 
+        #concat_logits
+        #part_logits
+        #top_n_prob
+
+        #Teacher Loss 来帮助计算 Navigator Loss 的零时shape
+        # 与partcls_loss仅仅改了一个shape
         part_loss = model.list_loss(part_logits.view(batch_size * PROPOSAL_NUM, -1),
                                     label.unsqueeze(1).repeat(1, PROPOSAL_NUM).view(-1)).view(batch_size, PROPOSAL_NUM)
+        # Feature detector loss
         raw_loss = creterion(raw_logits, label)
+        # Scrutinizing loss
         concat_loss = creterion(concat_logits, label)
+        # Navigator loss
         rank_loss = model.ranking_loss(top_n_prob, part_loss)
+        # Teacher loss
         partcls_loss = creterion(part_logits.view(batch_size * PROPOSAL_NUM, -1),
                                  label.unsqueeze(1).repeat(1, PROPOSAL_NUM).view(-1))
         total_loss = raw_loss + rank_loss + concat_loss + partcls_loss
@@ -132,7 +133,9 @@ for epoch in range(start_epoch, 5):
                 # calculate loss
                 concat_loss = creterion(concat_logits, label)
                 # calculate accuracy
+                print("concat_logits: ", concat_logits.shape)
                 _, concat_predict = torch.max(concat_logits, 1)
+                print("concat_predict: ", concat_predict)
                 total += batch_size
                 test_correct += torch.sum(concat_predict.data == label.data)
                 test_loss += concat_loss.item() * batch_size
