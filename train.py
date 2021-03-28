@@ -16,7 +16,7 @@ os.makedirs(save_dir)
 logging = init_log(save_dir)
 _print = logging.info
 
-DATESET_PATH = "./rgb"
+DATESET_PATH = "./optic_flow"
 # read dataset
 trainset = dataset.CUB(root=DATESET_PATH, is_train=True, data_len=None)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE,
@@ -26,6 +26,9 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE,
                                          shuffle=False, num_workers=4, drop_last=False)
 # define model
 net = model.attention_net(topN=PROPOSAL_NUM)
+print("--"*50)
+print("net: ", net)
+
 if resume:
     ckpt = torch.load(resume)
     net.load_state_dict(ckpt['net_state_dict'])
@@ -64,6 +67,15 @@ for epoch in range(start_epoch, 5):
         partcls_optimizer.zero_grad()
 
         raw_logits, concat_logits, part_logits, _, top_n_prob = net(img)
+        print("--"*50)
+        print("raw_logits shape: ", raw_logits.shape)
+        print("--"*50)
+        print("concat_logits shape: ", concat_logits.shape)
+        print("--"*50)
+        print("part_logits shape: ", part_logits.shape)
+        print("--"*50)
+        print("top_n_prob shape: ", top_n_prob.shape)
+        
         part_loss = model.list_loss(part_logits.view(batch_size * PROPOSAL_NUM, -1),
                                     label.unsqueeze(1).repeat(1, PROPOSAL_NUM).view(-1)).view(batch_size, PROPOSAL_NUM)
         raw_loss = creterion(raw_logits, label)
