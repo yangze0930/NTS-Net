@@ -48,6 +48,8 @@ class attention_net(nn.Module):
 
     def forward(self, x):
         resnet_out, rpn_feature, feature = self.pretrained_model(x)
+        print("--"*50)
+        print("self.pretrained_model: ", self.pretrained_model)
         # RPN 的输入为 backbone (VGG16, ResNet, etc) 的输出（简称 feature maps）。
         # pretrained_model 是resnet50
 
