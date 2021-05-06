@@ -1,15 +1,14 @@
 import os
 import torch.utils.data
-from torch.nn import DataParallel
 from datetime import datetime
 from torch.optim.lr_scheduler import MultiStepLR
-from config import BATCH_SIZE, PROPOSAL_NUM, SAVE_FREQ, LR, WD, resume, save_dir
-from core import model, dataset
+from config import PROPOSAL_NUM, SAVE_FREQ, LR, WD, save_dir
+from core import model
 from core.utils import init_log, progress_bar
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
-start_epoch = 1
+start_epoch = 0
 save_dir = os.path.join(save_dir, datetime.now().strftime('%Y%m%d_%H%M%S'))
 if os.path.exists(save_dir):
     raise NameError('model dir exists!')
@@ -22,7 +21,6 @@ import argparse
 import torch.utils.data
 
 import video_transforms
-import models
 import datasets
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

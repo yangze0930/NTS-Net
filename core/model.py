@@ -6,8 +6,9 @@ from core import resnet
 import numpy as np
 from core.anchors import generate_default_anchor_maps, hard_nms
 from config import CAT_NUM, PROPOSAL_NUM, NUM_CLASS
-
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
 # Navigator
 class ProposalNet(nn.Module): 
     def __init__(self):
@@ -110,6 +111,7 @@ def ranking_loss(score, targets, proposal_num=PROPOSAL_NUM):
     loss = Variable(torch.zeros(1).to(device))
     batch_size = score.size(0)
     for i in range(proposal_num):
+        # targets_p = (targets > targets[:, i].unsqueeze(1)).type(torch.cuda.FloatTensor)
         targets_p = (targets > targets[:, i].unsqueeze(1)).to(device)
         pivot = score[:, i].unsqueeze(1)
         loss_p = (1 - pivot + score) * targets_p
