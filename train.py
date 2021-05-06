@@ -170,7 +170,7 @@ schedulers = [MultiStepLR(raw_optimizer, milestones=[60, 100], gamma=0.1),
               MultiStepLR(partcls_optimizer, milestones=[60, 100], gamma=0.1)]
 net = net.to(device)
 
-for epoch in range(start_epoch, 5):
+for epoch in range(start_epoch, args.epochs):
     # begin training
     net.train()
     for i, (input, target) in enumerate(train_loader):
