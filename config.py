@@ -8,4 +8,4 @@ WD = 1e-4
 SAVE_FREQ = 1
 resume = ''
 test_model = 'model.ckpt'
-save_dir = '/content/NTS-Net/models/'
+save_dir = './models/'
