@@ -177,10 +177,8 @@ net = net.to(device)
 
 for epoch in range(start_epoch, 5):
     # begin training
-    _print('--' * 50)
     net.train()
     for i, (input, target) in enumerate(train_loader):
-        print("Training Batch{} / Epoch{}".format(i+1,epoch+1))
         img = input.float().to(device)
         label = target.to(device)
         # img, label = data[0].to(device), data[1].to(device)
@@ -264,9 +262,7 @@ for epoch in range(start_epoch, 5):
                 # calculate loss
                 concat_loss = criterion(concat_logits, label)
                 # calculate accuracy
-                print("concat_logits: ", concat_logits.shape)
                 _, concat_predict = torch.max(concat_logits, 1)
-                print("concat_predict: ", concat_predict)
                 total += batch_size
                 test_correct += torch.sum(concat_predict.data == label.data)
                 test_loss += concat_loss.item() * batch_size
