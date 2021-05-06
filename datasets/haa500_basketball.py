@@ -30,11 +30,15 @@ def make_dataset(root, source):
                 duration = int(line_info[1])
                 target = int(line_info[2])
                 for i in range(duration):
-                    item = (clip_path, i+1, target)
+                    clip_path_y = clip_path + "y"
+                    item = (clip_path_y, i + 1, target)
+                    clips.append(item)
+                    clip_path_x = clip_path+"x"
+                    item = (clip_path_x, i+1, target)
                     clips.append(item)
     return clips
 
-def ReadSegmentRGB(path, offsets, duration, new_height, new_width, new_length, is_color, name_pattern):
+def ReadSegmentRGB(path, offsets, frame_index, new_height, new_width, new_length, is_color, name_pattern):
     if is_color:
         cv_read_flag = cv2.IMREAD_COLOR         # > 0
     else:
@@ -42,13 +46,10 @@ def ReadSegmentRGB(path, offsets, duration, new_height, new_width, new_length, i
     interpolation = cv2.INTER_LINEAR
 
     sampled_list = []
-    # init a ramdom list to choose random new_length frames
-    frame_indexs = [np.random.randint(1,duration) for i in range(new_length)]
-
     for offset_id in range(len(offsets)):
         offset = offsets[offset_id]
         for length_id in range(1, new_length+1):
-            frame_name = name_pattern % (frame_indexs[length_id-1])
+            frame_name = name_pattern % (frame_index)
             frame_path = path + "/" + frame_name
             cv_img_origin = cv2.imread(frame_path, cv_read_flag)
             if cv_img_origin is None:
@@ -65,7 +66,7 @@ def ReadSegmentRGB(path, offsets, duration, new_height, new_width, new_length, i
     clip_input = np.concatenate(sampled_list, axis=2)
     return clip_input
 
-def ReadSegmentFlow(path, offsets, new_height, new_width, new_length, is_color, name_pattern):
+def ReadSegmentFlow(path, offsets, frame_index, new_height, new_width, new_length, is_color, name_pattern):
     if is_color:
         cv_read_flag = cv2.IMREAD_COLOR         # > 0
     else:
@@ -76,28 +77,22 @@ def ReadSegmentFlow(path, offsets, new_height, new_width, new_length, is_color, 
     for offset_id in range(len(offsets)):
         offset = offsets[offset_id]
         for length_id in range(1, new_length+1):
-            frame_name_x = name_pattern % ("x", length_id + offset)
-            frame_path_x = path + "/" + frame_name_x
-            cv_img_origin_x = cv2.imread(frame_path_x, cv_read_flag)
-            frame_name_y = name_pattern % ("y", length_id + offset)
-            frame_path_y = path + "/" + frame_name_y
-            cv_img_origin_y = cv2.imread(frame_path_y, cv_read_flag)
-            if cv_img_origin_x is None or cv_img_origin_y is None:
-               print("Could not load file %s or %s" % (frame_path_x, frame_path_y))
+            frame_name = name_pattern % (path[-1], frame_index)
+            frame_path = path[:-1] + "/" + frame_name
+            cv_img_origin = cv2.imread(frame_path, cv_read_flag)
+            if cv_img_origin is None:
+               print("Could not load file %s" % (frame_path))
                sys.exit()
                # TODO: error handling here
             if new_width > 0 and new_height > 0:
-                cv_img_x = cv2.resize(cv_img_origin_x, (new_width, new_height), interpolation)
-                cv_img_y = cv2.resize(cv_img_origin_y, (new_width, new_height), interpolation)
+                # use OpenCV3, use OpenCV2.4.13 may have error
+                cv_img = cv2.resize(cv_img_origin, (new_width, new_height), interpolation)
             else:
-                cv_img_x = cv_img_origin_x
-                cv_img_y = cv_img_origin_y
-            sampled_list.append(np.expand_dims(cv_img_x, 2))
-            sampled_list.append(np.expand_dims(cv_img_y, 2))
-
+                cv_img = cv_img_origin
+            cv_img = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+            sampled_list.append(cv_img)
     clip_input = np.concatenate(sampled_list, axis=2)
     return clip_input
-
 
 class haa500_basketball(data.Dataset):
 
@@ -151,8 +146,8 @@ class haa500_basketball(data.Dataset):
         self.video_transform = video_transform
 
     def __getitem__(self, index):
-        path, duration, target = self.clips[index]
-        average_duration = int(duration / self.num_segments)
+        path, frame_index, target = self.clips[index]
+        average_duration = int(frame_index / self.num_segments)
         offsets = []
         for seg_id in range(self.num_segments):
             if self.phase == "train":
@@ -174,7 +169,7 @@ class haa500_basketball(data.Dataset):
         if self.modality == "rgb":
             clip_input = ReadSegmentRGB(path,
                                         offsets,
-                                        duration,
+                                        frame_index,
                                         self.new_height,
                                         self.new_width,
                                         self.new_length,
@@ -184,6 +179,7 @@ class haa500_basketball(data.Dataset):
         elif self.modality == "flow":
             clip_input = ReadSegmentFlow(path,
                                         offsets,
+                                        frame_index,
                                         self.new_height,
                                         self.new_width,
                                         self.new_length,
@@ -202,7 +198,7 @@ class haa500_basketball(data.Dataset):
         if self.phase == "train":
             if len(clip_input.shape) == 2: # if only 1 img in this batch
                 clip_input = np.stack([clip_input] * 3, 2)
-            clip_input = Image.fromarray(clip_input)
+            clip_input = Image.fromarray(clip_input, mode='RGB')
             clip_input = transforms.Resize((600, 600), Image.BILINEAR)(clip_input)
             clip_input = transforms.RandomCrop(INPUT_SIZE)(clip_input)
             clip_input = transforms.RandomHorizontalFlip()(clip_input)
@@ -212,7 +208,7 @@ class haa500_basketball(data.Dataset):
         else:
             if len(clip_input.shape) == 2:
                 clip_input = np.stack([clip_input] * 3, 2)
-            clip_input = Image.fromarray(clip_input)
+            clip_input = Image.fromarray(clip_input, mode='RGB')
             clip_input = transforms.Resize((600, 600), Image.BILINEAR)(clip_input)
             clip_input = transforms.CenterCrop(INPUT_SIZE)(clip_input)
             clip_input = transforms.ToTensor()(clip_input)
