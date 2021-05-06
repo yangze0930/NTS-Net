@@ -269,17 +269,17 @@ for epoch in range(start_epoch, 5):
                 test_acc,
                 total))
 
-	# save model
-        net_state_dict = net.module.state_dict()
-        if not os.path.exists(save_dir):
-            os.mkdir(save_dir)
-        torch.save({
-            'epoch': epoch,
-            'train_loss': train_loss,
-            'train_acc': train_acc,
-            'test_loss': test_loss,
-            'test_acc': test_acc,
-            'net_state_dict': net_state_dict},
-            os.path.join(save_dir, '%03d.ckpt' % epoch))
+	# # save model
+    #     net_state_dict = net.module.state_dict()
+    #     if not os.path.exists(save_dir):
+    #         os.mkdir(save_dir)
+    #     torch.save({
+    #         'epoch': epoch,
+    #         'train_loss': train_loss,
+    #         'train_acc': train_acc,
+    #         'test_loss': test_loss,
+    #         'test_acc': test_acc,
+    #         'net_state_dict': net_state_dict},
+    #         os.path.join(save_dir, '%03d.ckpt' % epoch))
 
 print('finishing training')
