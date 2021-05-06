@@ -5,7 +5,7 @@ from torch.autograd import Variable
 from core import resnet
 import numpy as np
 from core.anchors import generate_default_anchor_maps, hard_nms
-from config import CAT_NUM, PROPOSAL_NUM， NUM_CLASS
+from config import CAT_NUM, PROPOSAL_NUM, NUM_CLASS
 
 
 # Navigator
