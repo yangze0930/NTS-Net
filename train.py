@@ -4,7 +4,6 @@ from datetime import datetime
 from torch.optim.lr_scheduler import MultiStepLR
 from config import PROPOSAL_NUM, SAVE_FREQ, LR, WD, save_dir
 from core import model
-from core.utils import init_log, progress_bar
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
@@ -13,8 +12,6 @@ save_dir = os.path.join(save_dir, datetime.now().strftime('%Y%m%d_%H%M%S'))
 if os.path.exists(save_dir):
     raise NameError('model dir exists!')
 os.makedirs(save_dir)
-logging = init_log(save_dir)
-_print = logging.info
 
 import os
 import argparse
@@ -212,8 +209,7 @@ for epoch in range(start_epoch, 5):
         concat_optimizer.step()
         partcls_optimizer.step()
         for scheduler in schedulers:
-            scheduler.step()
-        progress_bar(i, len(train_loader), 'train')
+            scheduler.step
 
     if epoch % SAVE_FREQ == 0:
         train_loss = 0
@@ -234,12 +230,11 @@ for epoch in range(start_epoch, 5):
                 total += batch_size
                 train_correct += torch.sum(concat_predict.data == label.data)
                 train_loss += concat_loss.item() * batch_size
-                progress_bar(i, len(train_loader), 'eval train set')
 
         train_acc = float(train_correct) / total
         train_loss = train_loss / total
 
-        _print(
+        print(
             'epoch:{} - train loss: {:.3f} and train acc: {:.3f} total sample: {}'.format(
                 epoch,
                 train_loss,
@@ -264,11 +259,10 @@ for epoch in range(start_epoch, 5):
                 total += batch_size
                 test_correct += torch.sum(concat_predict.data == label.data)
                 test_loss += concat_loss.item() * batch_size
-                progress_bar(i, len(val_loader), 'eval test set')
 
         test_acc = float(test_correct) / total
         test_loss = test_loss / total
-        _print(
+        print(
             'epoch:{} - test loss: {:.3f} and test acc: {:.3f} total sample: {}'.format(
                 epoch,
                 test_loss,
