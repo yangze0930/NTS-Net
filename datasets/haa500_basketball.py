@@ -30,8 +30,9 @@ def make_dataset(root, source):
                 clip_path = os.path.join(root, line_info[0])
                 duration = int(line_info[1])
                 target = int(line_info[2])
-                item = (clip_path, duration, target)
-                clips.append(item)
+                for i in range(duration):
+                    item = (clip_path, i+1, target)
+                    clips.append(item)
     return clips
 
 def ReadSegmentRGB(path, offsets, duration, new_height, new_width, new_length, is_color, name_pattern):
