@@ -151,11 +151,8 @@ val_loader = torch.utils.data.DataLoader(
 print("Building model ... ")
 net = model.attention_net(topN=PROPOSAL_NUM)
 
-# define loss function (criterion) and optimizer
+# define loss function (criterion)
 criterion = torch.nn.CrossEntropyLoss().to(device)
-optimizer = torch.optim.SGD(model.parameters(), args.lr,
-                            momentum=args.momentum,
-                            weight_decay=args.weight_decay)
 
 if not os.path.exists(args.resume):
     os.makedirs(args.resume)
@@ -184,7 +181,7 @@ for epoch in range(start_epoch, 5):
     # begin training
     _print('--' * 50)
     net.train()
-    for i, (input, target) in (train_loader):
+    for i, (input, target) in enumerate(train_loader):
         img = input.float().to(device)
         label = target.to(device)
         # img, label = data[0].cuda(), data[1].cuda()
