@@ -5,8 +5,10 @@ import sys
 import random
 import numpy as np
 import cv2
+from PIL import Image
+from torchvision import transforms
 
-
+INPUT_SIZE  =(448,448)
 def find_classes(dir):
 
     classes = [d for d in os.listdir(dir) if os.path.isdir(os.path.join(dir, d))]
@@ -191,12 +193,30 @@ class haa500_basketball(data.Dataset):
         else:
             print("No such modality %s" % (self.modality))
 
-        if self.transform is not None:
-            clip_input = self.transform(clip_input)
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-        if self.video_transform is not None:
-            clip_input = self.video_transform(clip_input)
+        # if self.transform is not None:
+        #     clip_input = self.transform(clip_input)
+        # if self.target_transform is not None:
+        #     target = self.target_transform(target)
+        # if self.video_transform is not None:
+        #     clip_input = self.video_transform(clip_input)
+        if self.phase == "train":
+            if len(clip_input.shape) == 2: # if only 1 img in this batch
+                clip_input = np.stack([clip_input] * 3, 2)
+            clip_input = Image.fromarray(clip_input, mode='RGB')
+            clip_input = transforms.Resize((600, 600), Image.BILINEAR)(clip_input)
+            clip_input = transforms.RandomCrop(INPUT_SIZE)(clip_input)
+            clip_input = transforms.RandomHorizontalFlip()(clip_input)
+            clip_input = transforms.ToTensor()(clip_input)
+            clip_input = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(clip_input)
+
+        else:
+            if len(clip_input.shape) == 2:
+                clip_input = np.stack([clip_input] * 3, 2)
+            clip_input = Image.fromarray(clip_input, mode='RGB')
+            clip_input = transforms.Resize((600, 600), Image.BILINEAR)(clip_input)
+            clip_input = transforms.CenterCrop(INPUT_SIZE)(clip_input)
+            clip_input = transforms.ToTensor()(clip_input)
+            clip_input = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(clip_input)
 
         return clip_input, target
 
