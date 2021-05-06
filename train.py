@@ -174,6 +174,7 @@ for epoch in range(start_epoch, args.epochs):
     # begin training
     net.train()
     for i, (input, target) in enumerate(train_loader):
+        print("Epoch {} Batch {}".format(epoch+1, i+1))
         img = input.float().to(device)
         label = target.to(device)
         # img, label = data[0].to(device), data[1].to(device)
