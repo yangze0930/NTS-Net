@@ -216,6 +216,10 @@ class haa500_basketball(data.Dataset):
         else:
             if len(clip_input.shape) == 2:
                 clip_input = np.stack([clip_input] * 3, 2)
+            if self.modality == "flow":
+                temp = np.zeros(clip_input.shape[:-1])
+                temp = np.expand_dims(temp, axis=2)
+                clip_input = np.concatenate((clip_input, temp),2)
             clip_input = Image.fromarray(clip_input, mode='RGB')
             clip_input = transforms.Resize((600, 600), Image.BILINEAR)(clip_input)
             clip_input = transforms.CenterCrop(INPUT_SIZE)(clip_input)
