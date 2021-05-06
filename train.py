@@ -6,8 +6,8 @@ from torch.optim.lr_scheduler import MultiStepLR
 from config import BATCH_SIZE, PROPOSAL_NUM, SAVE_FREQ, LR, WD, resume, save_dir
 from core import model, dataset
 from core.utils import init_log, progress_bar
-os.environ['KMP_DUPLICATE_LIB_OK']='True'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 start_epoch = 1
 save_dir = os.path.join(save_dir, datetime.now().strftime('%Y%m%d_%H%M%S'))
@@ -180,6 +180,7 @@ for epoch in range(start_epoch, 5):
     _print('--' * 50)
     net.train()
     for i, (input, target) in enumerate(train_loader):
+        print("Training Batch{} / Epoch{}".format(i+1,epoch+1))
         img = input.float().to(device)
         label = target.to(device)
         # img, label = data[0].to(device), data[1].to(device)
