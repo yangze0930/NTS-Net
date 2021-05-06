@@ -59,10 +59,10 @@ parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                     help='momentum')
 parser.add_argument('--weight-decay', '--wd', default=5e-4, type=float,
                     metavar='W', help='weight decay (default: 5e-4)')
-parser.add_argument('--print-freq', default=1, type=int,
-                    metavar='N', help='print frequency (default: 5)')
-parser.add_argument('--save-freq', default=1, type=int,
-                    metavar='N', help='save frequency (default: 5)')
+parser.add_argument('--print-freq', default=100, type=int,
+                    metavar='N', help='print frequency (default: 100)')
+parser.add_argument('--save-freq', default=500, type=int,
+                    metavar='N', help='save frequency (default: 500)')
 parser.add_argument('--resume', default='./checkpoints', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
@@ -212,7 +212,66 @@ for epoch in range(start_epoch, args.epochs):
         for scheduler in schedulers:
             scheduler.step
 
-    if epoch % SAVE_FREQ == 0:
+        if i % args.print_freq == 0:
+            # eval train test
+            train_loss = 0
+            train_correct = 0
+            total = 0
+            net.eval()
+            for i, (input, target) in enumerate(train_loader):
+                with torch.no_grad():
+                    img = input.float().to(device)
+                    label = target.to(device)
+                    # img, label = data[0].to(device), data[1].to(device)
+                    batch_size = img.size(0)
+                    _, concat_logits, _, _, _ = net(img)
+                    # calculate loss
+                    concat_loss = criterion(concat_logits, label)
+                    # calculate accuracy
+                    _, concat_predict = torch.max(concat_logits, 1)
+                    total += batch_size
+                    train_correct += torch.sum(concat_predict.data == label.data)
+                    train_loss += concat_loss.item() * batch_size
+
+            train_acc = float(train_correct) / total
+            train_loss = train_loss / total
+
+            print(
+                'epoch:{} - train loss: {:.3f} and train acc: {:.3f} total sample: {}'.format(
+                    epoch,
+                    train_loss,
+                    train_acc,
+                    total))
+
+            # eval val test
+            test_loss = 0
+            test_correct = 0
+            total = 0
+            for i, (input, target) in enumerate(val_loader):
+                with torch.no_grad():
+                    img = input.float().to(device)
+                    label = target.to(device)
+                    # img, label = data[0].to(device), data[1].to(device)
+                    batch_size = img.size(0)
+                    _, concat_logits, _, _, _ = net(img)
+                    # calculate loss
+                    concat_loss = criterion(concat_logits, label)
+                    # calculate accuracy
+                    _, concat_predict = torch.max(concat_logits, 1)
+                    total += batch_size
+                    test_correct += torch.sum(concat_predict.data == label.data)
+                    test_loss += concat_loss.item() * batch_size
+
+            test_acc = float(test_correct) / total
+            test_loss = test_loss / total
+            print(
+                'epoch:{} - test loss: {:.3f} and test acc: {:.3f} total sample: {}'.format(
+                    epoch,
+                    test_loss,
+                    test_acc,
+                    total))
+
+    if epoch % args.save_freq == 0:
         train_loss = 0
         train_correct = 0
         total = 0
