@@ -35,7 +35,7 @@ def make_dataset(root, source):
                     clips.append(item)
     return clips
 
-def ReadSegmentRGB(path, offsets, duration, new_height, new_width, new_length, is_color, name_pattern):
+def ReadSegmentRGB(path, offsets, frame_index, new_height, new_width, new_length, is_color, name_pattern):
     if is_color:
         cv_read_flag = cv2.IMREAD_COLOR         # > 0
     else:
@@ -43,13 +43,10 @@ def ReadSegmentRGB(path, offsets, duration, new_height, new_width, new_length, i
     interpolation = cv2.INTER_LINEAR
 
     sampled_list = []
-    # init a ramdom list to choose random new_length frames
-    frame_indexs = [np.random.randint(1,duration) for i in range(new_length)]
-
     for offset_id in range(len(offsets)):
         offset = offsets[offset_id]
         for length_id in range(1, new_length+1):
-            frame_name = name_pattern % (frame_indexs[length_id-1])
+            frame_name = name_pattern % (frame_index)
             frame_path = path + "/" + frame_name
             cv_img_origin = cv2.imread(frame_path, cv_read_flag)
             if cv_img_origin is None:
@@ -152,8 +149,8 @@ class haa500_basketball(data.Dataset):
         self.video_transform = video_transform
 
     def __getitem__(self, index):
-        path, duration, target = self.clips[index]
-        average_duration = int(duration / self.num_segments)
+        path, frame_index, target = self.clips[index]
+        average_duration = int(frame_index / self.num_segments)
         offsets = []
         for seg_id in range(self.num_segments):
             if self.phase == "train":
@@ -175,7 +172,7 @@ class haa500_basketball(data.Dataset):
         if self.modality == "rgb":
             clip_input = ReadSegmentRGB(path,
                                         offsets,
-                                        duration,
+                                        frame_index,
                                         self.new_height,
                                         self.new_width,
                                         self.new_length,
@@ -184,6 +181,7 @@ class haa500_basketball(data.Dataset):
                                         )
         elif self.modality == "flow":
             clip_input = ReadSegmentFlow(path,
+                                         frame_index,
                                         offsets,
                                         self.new_height,
                                         self.new_width,
