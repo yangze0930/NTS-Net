@@ -109,7 +109,7 @@ val_setting_file = "val_%s_split%d.txt" % (args.modality, args.split)
 val_split_file = os.path.join(args.settings, args.dataset, val_setting_file)
 if not os.path.exists(train_split_file) or not os.path.exists(val_split_file):
     print("No split file exists in %s directory. Preprocess the dataset first" % (args.settings))
-
+print("Loading data from {}".format(args.data))
 train_dataset = datasets.__dict__[args.dataset](root=args.data,
                                                 source=train_split_file,
                                                 phase="train",

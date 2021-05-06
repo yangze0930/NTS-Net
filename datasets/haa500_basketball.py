@@ -1,5 +1,5 @@
 import torch.utils.data as data
-
+import torch
 import os
 import sys
 import random
@@ -7,8 +7,8 @@ import numpy as np
 import cv2
 from PIL import Image
 from torchvision import transforms
+from config import INPUT_SIZE
 
-INPUT_SIZE  =(448,448)
 def find_classes(dir):
 
     classes = [d for d in os.listdir(dir) if os.path.isdir(os.path.join(dir, d))]
@@ -202,6 +202,10 @@ class haa500_basketball(data.Dataset):
         if self.phase == "train":
             if len(clip_input.shape) == 2: # if only 1 img in this batch
                 clip_input = np.stack([clip_input] * 3, 2)
+            if self.modality == "flow":
+                temp = np.zeros(clip_input.shape[:-1])
+                temp = np.expand_dims(temp, axis=2)
+                clip_input = np.concatenate((clip_input, temp),2)
             clip_input = Image.fromarray(clip_input, mode='RGB')
             clip_input = transforms.Resize((600, 600), Image.BILINEAR)(clip_input)
             clip_input = transforms.RandomCrop(INPUT_SIZE)(clip_input)
