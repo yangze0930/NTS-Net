@@ -178,11 +178,6 @@ for epoch in range(start_epoch, args.epochs):
         label = target.to(device)
         # img, label = data[0].to(device), data[1].to(device)
         batch_size = img.size(0)
-        raw_optimizer.zero_grad()
-        part_optimizer.zero_grad()
-        concat_optimizer.zero_grad()
-        partcls_optimizer.zero_grad()
-
         raw_logits, concat_logits, part_logits, _, top_n_prob = net(img)
         #raw_logits: 
         #concat_logits
@@ -203,6 +198,12 @@ for epoch in range(start_epoch, args.epochs):
         partcls_loss = criterion(part_logits.view(batch_size * PROPOSAL_NUM, -1),
                                  label.unsqueeze(1).repeat(1, PROPOSAL_NUM).view(-1))
         total_loss = raw_loss + rank_loss + concat_loss + partcls_loss
+
+        raw_optimizer.zero_grad()
+        part_optimizer.zero_grad()
+        concat_optimizer.zero_grad()
+        partcls_optimizer.zero_grad()
+
         total_loss.backward()
         raw_optimizer.step()
         part_optimizer.step()

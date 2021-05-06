@@ -1,5 +1,4 @@
 import torch.utils.data as data
-import torch
 import os
 import sys
 import random
@@ -30,8 +29,9 @@ def make_dataset(root, source):
                 clip_path = os.path.join(root, line_info[0])
                 duration = int(line_info[1])
                 target = int(line_info[2])
-                item = (clip_path, duration, target)
-                clips.append(item)
+                for i in range(duration):
+                    item = (clip_path, i+1, target)
+                    clips.append(item)
     return clips
 
 def ReadSegmentRGB(path, offsets, duration, new_height, new_width, new_length, is_color, name_pattern):
@@ -202,11 +202,7 @@ class haa500_basketball(data.Dataset):
         if self.phase == "train":
             if len(clip_input.shape) == 2: # if only 1 img in this batch
                 clip_input = np.stack([clip_input] * 3, 2)
-            if self.modality == "flow":
-                temp = np.zeros(clip_input.shape[:-1])
-                temp = np.expand_dims(temp, axis=2)
-                clip_input = np.concatenate((clip_input, temp),2)
-            clip_input = Image.fromarray(clip_input, mode='RGB')
+            clip_input = Image.fromarray(clip_input)
             clip_input = transforms.Resize((600, 600), Image.BILINEAR)(clip_input)
             clip_input = transforms.RandomCrop(INPUT_SIZE)(clip_input)
             clip_input = transforms.RandomHorizontalFlip()(clip_input)
@@ -216,11 +212,7 @@ class haa500_basketball(data.Dataset):
         else:
             if len(clip_input.shape) == 2:
                 clip_input = np.stack([clip_input] * 3, 2)
-            if self.modality == "flow":
-                temp = np.zeros(clip_input.shape[:-1])
-                temp = np.expand_dims(temp, axis=2)
-                clip_input = np.concatenate((clip_input, temp),2)
-            clip_input = Image.fromarray(clip_input, mode='RGB')
+            clip_input = Image.fromarray(clip_input)
             clip_input = transforms.Resize((600, 600), Image.BILINEAR)(clip_input)
             clip_input = transforms.CenterCrop(INPUT_SIZE)(clip_input)
             clip_input = transforms.ToTensor()(clip_input)
