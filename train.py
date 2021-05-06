@@ -7,7 +7,7 @@ from config import BATCH_SIZE, PROPOSAL_NUM, SAVE_FREQ, LR, WD, resume, save_dir
 from core import model, dataset
 from core.utils import init_log, progress_bar
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0,1,2,3'
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 start_epoch = 1
 save_dir = os.path.join(save_dir, datetime.now().strftime('%Y%m%d_%H%M%S'))
 if os.path.exists(save_dir):
@@ -26,15 +26,15 @@ import datasets
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-parser = argparse.ArgumentParser(description='PyTorch Two-Stream Action Recognition')
-parser.add_argument('data', metavar='DIR',
+parser = argparse.ArgumentParser(description='PyTorch NTS-Net Action Recognition')
+parser.add_argument('--data', metavar='DIR',default='./datasets/haa500_basketball_frames',
                     help='path to dataset')
 parser.add_argument('--settings', metavar='DIR', default='./datasets/settings',
                     help='path to datset setting files')
 parser.add_argument('--modality', '-m', metavar='MODALITY', default='rgb',
                     choices=["rgb", "flow"],
                     help='modality: rgb | flow')
-parser.add_argument('--dataset', '-d', default='ucf101',
+parser.add_argument('--dataset', '-d', default='haa500_basketball',
                     choices=["ucf101", "hmdb51", "haa500_basketball"],
                     help='dataset: ucf101 | hmdb51 | haa500_basketball')
 parser.add_argument('-s', '--split', default=1, type=int, metavar='S',
@@ -172,8 +172,7 @@ schedulers = [MultiStepLR(raw_optimizer, milestones=[60, 100], gamma=0.1),
               MultiStepLR(concat_optimizer, milestones=[60, 100], gamma=0.1),
               MultiStepLR(part_optimizer, milestones=[60, 100], gamma=0.1),
               MultiStepLR(partcls_optimizer, milestones=[60, 100], gamma=0.1)]
-net = net.cuda()
-net = DataParallel(net)
+net = net.to(device)
 
 for epoch in range(start_epoch, 5):
     for scheduler in schedulers:
@@ -184,7 +183,7 @@ for epoch in range(start_epoch, 5):
     for i, (input, target) in enumerate(train_loader):
         img = input.float().to(device)
         label = target.to(device)
-        # img, label = data[0].cuda(), data[1].cuda()
+        # img, label = data[0].to(device), data[1].to(device)
         batch_size = img.size(0)
         raw_optimizer.zero_grad()
         part_optimizer.zero_grad()
@@ -227,7 +226,7 @@ for epoch in range(start_epoch, 5):
             with torch.no_grad():
                 img = input.float().to(device)
                 label = target.to(device)
-                # img, label = data[0].cuda(), data[1].cuda()
+                # img, label = data[0].to(device), data[1].to(device)
                 batch_size = img.size(0)
                 _, concat_logits, _, _, _ = net(img)
                 # calculate loss
@@ -257,7 +256,7 @@ for epoch in range(start_epoch, 5):
             with torch.no_grad():
                 img = input.float().to(device)
                 label = target.to(device)
-                # img, label = data[0].cuda(), data[1].cuda()
+                # img, label = data[0].to(device), data[1].to(device)
                 batch_size = img.size(0)
                 _, concat_logits, _, _, _ = net(img)
                 # calculate loss
