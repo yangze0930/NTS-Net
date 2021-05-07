@@ -1,4 +1,5 @@
 import torch.utils.data as data
+
 import os
 import sys
 import random
@@ -6,8 +7,8 @@ import numpy as np
 import cv2
 from PIL import Image
 from torchvision import transforms
-from config import INPUT_SIZE
 
+INPUT_SIZE  =(448,448)
 def find_classes(dir):
 
     classes = [d for d in os.listdir(dir) if os.path.isdir(os.path.join(dir, d))]
@@ -15,7 +16,7 @@ def find_classes(dir):
     class_to_idx = {classes[i]: i for i in range(len(classes))}
     return classes, class_to_idx
 
-def make_dataset(root, source):
+def make_dataset(root, source, modality):
 
     if not os.path.exists(source):
         print("Setting file %s for haa500_basketball dataset doesn't exist." % (source))
@@ -29,9 +30,18 @@ def make_dataset(root, source):
                 clip_path = os.path.join(root, line_info[0])
                 duration = int(line_info[1])
                 target = int(line_info[2])
-                for i in range(duration):
-                    item = (clip_path, i+1, target)
-                    clips.append(item)
+                if modality == "flow":
+                    for i in range(duration):
+                        clip_path_y = clip_path + "y"
+                        item = (clip_path_y, i + 1, target)
+                        clips.append(item)
+                        clip_path_x = clip_path+"x"
+                        item = (clip_path_x, i+1, target)
+                        clips.append(item)
+                else:
+                    for i in range(duration):
+                        item = (clip_path, i+1, target)
+                        clips.append(item)
     return clips
 
 def ReadSegmentRGB(path, offsets, frame_index, new_height, new_width, new_length, is_color, name_pattern):
@@ -109,7 +119,7 @@ class haa500_basketball(data.Dataset):
                  video_transform=None):
 
         classes, class_to_idx = find_classes(root)
-        clips = make_dataset(root, source)
+        clips = make_dataset(root, source, modality)
 
         if len(clips) == 0:
             raise(RuntimeError("Found 0 video clips in subfolders of: " + root + "\n"
