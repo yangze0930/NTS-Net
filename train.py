@@ -61,8 +61,8 @@ parser.add_argument('--weight-decay', '--wd', default=5e-4, type=float,
                     metavar='W', help='weight decay (default: 5e-4)')
 parser.add_argument('--print-freq', default=100, type=int,
                     metavar='N', help='print frequency (default: 100)')
-parser.add_argument('--save-freq', default=500, type=int,
-                    metavar='N', help='save frequency (default: 500)')
+parser.add_argument('--save-freq', default=1, type=int,
+                    metavar='N', help='save frequency (default: 1)')
 parser.add_argument('--resume', default='./checkpoints', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
@@ -329,17 +329,17 @@ for epoch in range(start_epoch, args.epochs):
                 test_acc,
                 total))
 
-	# # save model
-    #     net_state_dict = net.module.state_dict()
-    #     if not os.path.exists(save_dir):
-    #         os.mkdir(save_dir)
-    #     torch.save({
-    #         'epoch': epoch,
-    #         'train_loss': train_loss,
-    #         'train_acc': train_acc,
-    #         'test_loss': test_loss,
-    #         'test_acc': test_acc,
-    #         'net_state_dict': net_state_dict},
-    #         os.path.join(save_dir, '%03d.ckpt' % epoch))
+	# save model
+        net_state_dict = net.state_dict()
+        if not os.path.exists(save_dir):
+            os.mkdir(save_dir)
+        torch.save({
+            'epoch': epoch,
+            'train_loss': train_loss,
+            'train_acc': train_acc,
+            'test_loss': test_loss,
+            'test_acc': test_acc,
+            'net_state_dict': net_state_dict},
+            os.path.join(save_dir, '%03d.ckpt' % epoch))
 
 print('finishing training')
