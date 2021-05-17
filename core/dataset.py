@@ -36,8 +36,8 @@ class CUB():
     def __getitem__(self, index):
         if self.is_train:
             img, target = self.train_img[index], self.train_label[index]
-            if len(img.shape) == 2:
-                img = np.stack([img] * 3, 2)
+            if len(img.shape) == 2: # if only 1 img in this batch
+                img = np.stack([img] * 3, 2) 
             img = Image.fromarray(img, mode='RGB')
             img = transforms.Resize((600, 600), Image.BILINEAR)(img)
             img = transforms.RandomCrop(INPUT_SIZE)(img)
