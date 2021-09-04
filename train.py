@@ -1,4 +1,6 @@
+#from datasets.ShuffleMNIST.dataset import ShuffleMNIST
 import os
+import numpy as np
 import torch.utils.data
 from torch.nn import DataParallel
 from datetime import datetime
@@ -6,6 +8,13 @@ from torch.optim.lr_scheduler import MultiStepLR
 from config import BATCH_SIZE, PROPOSAL_NUM, SAVE_FREQ, LR, WD, resume, save_dir
 from core import model, dataset
 from core.utils import init_log, progress_bar, create_dir
+
+import torchvision
+from torchvision.utils import save_image
+from torchvision import transforms
+
+from ShuffleMNIST import dataset as Shuffdata
+
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0,1,2,3'
 start_epoch = 1
@@ -19,12 +28,48 @@ logging = init_log(save_dir)
 _print = logging.info
 
 # read dataset
-trainset = dataset.CUB(root='./CUB_200_2011', is_train=True, data_len=None)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE,
-                                          shuffle=True, num_workers=8, drop_last=False)
-testset = dataset.CUB(root='./CUB_200_2011', is_train=False, data_len=None)
-testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE,
-                                         shuffle=False, num_workers=8, drop_last=False)
+#trainset = dataset.CUB(root='./CUB_200_2011', is_train=True, data_len=None)
+#trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE,
+#                                          shuffle=True, num_workers=8, drop_last=False)
+#testset = dataset.CUB(root='./CUB_200_2011', is_train=False, data_len=None)
+#testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE,
+#                                         shuffle=False, num_workers=8, drop_last=False)
+
+#read dataset
+batch_size_train = 64
+batch_size_test = 1000
+
+
+dataset_train =  torchvision.datasets.MNIST('/home/alessio/alonso/datasets', train=True, download=True,
+                             transform=torchvision.transforms.ToTensor())
+
+dataset_test =  torchvision.datasets.MNIST('/home/alessio/alonso/datasets', train=False, 
+                                           download=True,transform=torchvision.transforms.ToTensor())
+
+train_loader = torch.utils.data.DataLoader(dataset_train, batch_size=batch_size_train,drop_last=True, shuffle = True)
+test_loader = torch.utils.data.DataLoader(dataset_test,batch_size=batch_size_test, shuffle = True,drop_last=True)
+
+shuffled_train = Shuffdata.ShuffleMNIST(train_loader, anchors = [], num=4, radius = 42, wall_shape = 112, sum = True,is_train=True)
+shuffled_test = Shuffdata.ShuffleMNIST(test_loader, anchors = [], num=4, radius = 42, wall_shape = 112, sum = True, is_train = False)
+
+print('There are {} images and {} labels in the train set.'.format(len(shuffled_train.train_img),
+        len(shuffled_train.train_label)))
+print('There are {} images and {} labels in the test set.'.format(len(shuffled_test.test_img),
+        len(shuffled_test.test_label)))
+
+#Configuring shuffled DataLoader
+from torch.utils.data.sampler import RandomSampler
+
+#se cambian estos nombres a train loader para que sean los que se llaman en la red
+train_sampler = RandomSampler(shuffled_train, replacement=True, num_samples= 51200, generator=None)
+test_sampler = RandomSampler(shuffled_test, replacement=True, num_samples= 5760, generator=None)
+
+trainloader = torch.utils.data.DataLoader(shuffled_train, batch_size=batch_size_train
+                                                   ,drop_last=False, sampler = train_sampler)
+
+testloader = torch.utils.data.DataLoader(shuffled_test, batch_size=batch_size_train
+                                                  ,drop_last=False, sampler = test_sampler)
+
 # define model
 net = model.attention_net(topN=PROPOSAL_NUM)
 if resume:
@@ -49,6 +94,10 @@ schedulers = [MultiStepLR(raw_optimizer, milestones=[60, 100], gamma=0.1),
               MultiStepLR(partcls_optimizer, milestones=[60, 100], gamma=0.1)]
 net = net.cuda()
 net = DataParallel(net)
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
+# Eevitar warning y que si se concidere el primer valor de la taza de aprendizaje
+# lr_scheduler.MultiStepLR()
 
 for epoch in range(start_epoch, 500):
     for scheduler in schedulers:
@@ -57,13 +106,23 @@ for epoch in range(start_epoch, 500):
     # begin training
     _print('--' * 50)
     net.train()
-    for i, data in enumerate(trainloader):
-        img, label = data[0].cuda(), data[1].cuda()
+    for batch_idx, (data_, target_) in enumerate(trainloader):
+        #cambiamos sintaxis de esta parte
+        img, label = data_, target_.to(device)
         batch_size = img.size(0)
         raw_optimizer.zero_grad()
         part_optimizer.zero_grad()
         concat_optimizer.zero_grad()
         partcls_optimizer.zero_grad()
+
+
+        #transformacion de los datos
+        if len(img.shape) == 3:
+                img = np.stack([img] * 3, 2)        
+        img = np.transpose(img, (0,1,2,3))
+        img = torch.as_tensor(img)
+        data_ = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(img)
+        img = data_.to(device)
 
         raw_logits, concat_logits, part_logits, _, top_n_prob = net(img)
         part_loss = model.list_loss(part_logits.view(batch_size * PROPOSAL_NUM, -1),
@@ -87,9 +146,21 @@ for epoch in range(start_epoch, 500):
         train_correct = 0
         total = 0
         net.eval()
-        for i, data in enumerate(trainloader):
+        for batch_idx_t, (data_t, target_t) in enumerate(trainloader):
             with torch.no_grad():
-                img, label = data[0].cuda(), data[1].cuda()
+                img, label = data_t, target_t.to(device)
+
+                #transformacion de los datos
+                img = np.array(data_t)
+                #print(img.shape)
+                if len(img.shape) == 3:
+                    img = np.stack([img] * 3, 2)
+
+                img = np.transpose(img, (0,2,1,3))
+                img = torch.as_tensor(img)
+                data_t = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(img)
+                img = data_t.to(device)
+
                 batch_size = img.size(0)
                 _, concat_logits, _, _, _ = net(img)
                 # calculate loss
