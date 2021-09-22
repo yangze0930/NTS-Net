@@ -7,13 +7,15 @@ from datetime import datetime
 from torch.optim.lr_scheduler import MultiStepLR
 from config import BATCH_SIZE, PROPOSAL_NUM, SAVE_FREQ, LR, WD, resume, save_dir
 from core import model, dataset
-from core.utils import init_log, progress_bar, create_dir
+from core.utils import init_log, progress_bar, create_dir, timer
 
 import torchvision
 from torchvision.utils import save_image
 from torchvision import transforms
 
 from ShuffleMNIST import dataset as Shuffdata
+
+from PIL import Image
 
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0,1,2,3'
@@ -49,8 +51,8 @@ dataset_test =  torchvision.datasets.MNIST('/home/alessio/alonso/datasets', trai
 train_loader = torch.utils.data.DataLoader(dataset_train, batch_size=batch_size_train,drop_last=True, shuffle = True)
 test_loader = torch.utils.data.DataLoader(dataset_test,batch_size=batch_size_test, shuffle = True,drop_last=True)
 
-shuffled_train = Shuffdata.ShuffleMNIST(train_loader, anchors = [], num=4, radius = 42, wall_shape = 112, sum = True,is_train=True)
-shuffled_test = Shuffdata.ShuffleMNIST(test_loader, anchors = [], num=4, radius = 42, wall_shape = 112, sum = True, is_train = False)
+shuffled_train = Shuffdata.ShuffleMNIST(train_loader, anchors = [], num=4, radius = 42, wall_shape = 600, sum = True,is_train=True)
+shuffled_test = Shuffdata.ShuffleMNIST(test_loader, anchors = [], num=4, radius = 42, wall_shape = 600, sum = True, is_train = False)
 
 print('There are {} images and {} labels in the train set.'.format(len(shuffled_train.train_img),
         len(shuffled_train.train_label)))
@@ -99,83 +101,121 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 # Eevitar warning y que si se concidere el primer valor de la taza de aprendizaje
 # lr_scheduler.MultiStepLR()
 
-for epoch in range(start_epoch, 500):
-    for scheduler in schedulers:
-        scheduler.step()
+@timer
+def entrenamiento(start_epoch, _print, trainloader, testloader, net, creterion, raw_optimizer, concat_optimizer, part_optimizer, partcls_optimizer, schedulers, device):
+    for epoch in range(start_epoch, 500):
+        for scheduler in schedulers:
+            scheduler.step()
 
     # begin training
-    _print('--' * 50)
-    net.train()
-    for batch_idx, (data_, target_) in enumerate(trainloader):
+        _print('--' * 50)
+        net.train()
+        for batch_idx, (data_, target_) in enumerate(trainloader):
         #cambiamos sintaxis de esta parte
-        img, label = data_, target_.to(device)
-        batch_size = img.size(0)
-        raw_optimizer.zero_grad()
-        part_optimizer.zero_grad()
-        concat_optimizer.zero_grad()
-        partcls_optimizer.zero_grad()
+            img, label = data_, target_.to(device)
+            batch_size = img.size(0)
+            raw_optimizer.zero_grad()
+            part_optimizer.zero_grad()
+            concat_optimizer.zero_grad()
+            partcls_optimizer.zero_grad()
 
 
         #transformacion de los datos
-        if len(img.shape) == 3:
-                img = np.stack([img] * 3, 2)        
-        img = np.transpose(img, (0,1,2,3))
-        img = torch.as_tensor(img)
-        data_ = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(img)
-        img = data_.to(device)
+            ##if len(img.shape) == 3:
+            ##        img = np.stack([img] * 3, 2)        
+            
+            ##img = np.transpose(img, (0,1,2,3))
+            #img = Image.fromarray(img, mode='RGB')
+            #img = Image.fromarray(img)
+            #img = transforms.Resize((600, 600), Image.BILINEAR)(img)
+            ##img = torch.as_tensor(img)
+            #img = transforms.ToTensor()(img)
+            ##data_ = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(img)
 
-        raw_logits, concat_logits, part_logits, _, top_n_prob = net(img)
-        part_loss = model.list_loss(part_logits.view(batch_size * PROPOSAL_NUM, -1),
+
+            if len(img.shape) == 2:
+                img = np.stack([img] * 3, 2)
+            img =  img.numpy()  
+            img = Image.fromarray(img, mode='RGB')
+            img = transforms.Resize((600, 600), Image.BILINEAR)(img)
+            #img = transforms.RandomCrop(INPUT_SIZE)(img)
+            img = transforms.RandomHorizontalFlip()(img)
+            img = transforms.ToTensor()(img)
+            data_ = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(img)
+
+
+
+            img = data_.to(device)
+
+            raw_logits, concat_logits, part_logits, _, top_n_prob = net(img)
+            part_loss = model.list_loss(part_logits.view(batch_size * PROPOSAL_NUM, -1),
                                     label.unsqueeze(1).repeat(1, PROPOSAL_NUM).view(-1)).view(batch_size, PROPOSAL_NUM)
-        raw_loss = creterion(raw_logits, label)
-        concat_loss = creterion(concat_logits, label)
-        rank_loss = model.ranking_loss(top_n_prob, part_loss)
-        partcls_loss = creterion(part_logits.view(batch_size * PROPOSAL_NUM, -1),
+            raw_loss = creterion(raw_logits, label)
+            concat_loss = creterion(concat_logits, label)
+            rank_loss = model.ranking_loss(top_n_prob, part_loss)
+            partcls_loss = creterion(part_logits.view(batch_size * PROPOSAL_NUM, -1),
                                  label.unsqueeze(1).repeat(1, PROPOSAL_NUM).view(-1))
 
-        total_loss = raw_loss + rank_loss + concat_loss + partcls_loss
-        total_loss.backward()
-        raw_optimizer.step()
-        part_optimizer.step()
-        concat_optimizer.step()
-        partcls_optimizer.step()
-        progress_bar(i, len(trainloader), 'train')
+            total_loss = raw_loss + rank_loss + concat_loss + partcls_loss
+            total_loss.backward()
+            raw_optimizer.step()
+            part_optimizer.step()
+            concat_optimizer.step()
+            partcls_optimizer.step()
+            progress_bar(i, len(trainloader), 'train')
 
-    if epoch % SAVE_FREQ == 0:
-        train_loss = 0
-        train_correct = 0
-        total = 0
-        net.eval()
-        for batch_idx_t, (data_t, target_t) in enumerate(trainloader):
-            with torch.no_grad():
-                img, label = data_t, target_t.to(device)
+        if epoch % SAVE_FREQ == 0:
+            train_loss = 0
+            train_correct = 0
+            total = 0
+            net.eval()
+            for batch_idx_t, (data_t, target_t) in enumerate(trainloader):
+                with torch.no_grad():
+                    img, label = data_t, target_t.to(device)
 
                 #transformacion de los datos
-                img = np.array(data_t)
+                    img = np.array(data_t)
                 #print(img.shape)
-                if len(img.shape) == 3:
-                    img = np.stack([img] * 3, 2)
+                    ##if len(img.shape) == 3:
+                    ##    img = np.stack([img] * 3, 2)
 
-                img = np.transpose(img, (0,2,1,3))
-                img = torch.as_tensor(img)
-                data_t = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(img)
-                img = data_t.to(device)
+                    ##img = np.transpose(img, (0,2,1,3))
+                    #img = Image.fromarray(img, mode='RGB')
+                    #img = Image.fromarray(img)
+                    #img = transforms.Resize((600, 600), Image.BILINEAR)(img)
+                    ##img = torch.as_tensor(img)
+                    #img = transforms.ToTensor()(img)
+                    #data_t = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(img)
+                    ##data_t = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(img)
 
-                batch_size = img.size(0)
-                _, concat_logits, _, _, _ = net(img)
+                    if len(img.shape) == 2:
+                        img = np.stack([img] * 3, 2)
+                    img =  img.numpy()  
+                    img = Image.fromarray(img, mode='RGB')
+                    img = transforms.Resize((600, 600), Image.BILINEAR)(img)
+                    #img = transforms.RandomCrop(INPUT_SIZE)(img)
+                    img = transforms.RandomHorizontalFlip()(img)
+                    img = transforms.ToTensor()(img)
+                    data_t = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(img)
+
+
+                    img = data_t.to(device)
+
+                    batch_size = img.size(0)
+                    _, concat_logits, _, _, _ = net(img)
                 # calculate loss
-                concat_loss = creterion(concat_logits, label)
+                    concat_loss = creterion(concat_logits, label)
                 # calculate accuracy
-                _, concat_predict = torch.max(concat_logits, 1)
-                total += batch_size
-                train_correct += torch.sum(concat_predict.data == label.data)
-                train_loss += concat_loss.item() * batch_size
-                progress_bar(i, len(trainloader), 'eval train set')
+                    _, concat_predict = torch.max(concat_logits, 1)
+                    total += batch_size
+                    train_correct += torch.sum(concat_predict.data == label.data)
+                    train_loss += concat_loss.item() * batch_size
+                    progress_bar(i, len(trainloader), 'eval train set')
 
-        train_acc = float(train_correct) / total
-        train_loss = train_loss / total
+            train_acc = float(train_correct) / total
+            train_loss = train_loss / total
 
-        _print(
+            _print(
             'epoch:{} - train loss: {:.3f} and train acc: {:.3f} total sample: {}'.format(
                 epoch,
                 train_loss,
@@ -183,26 +223,26 @@ for epoch in range(start_epoch, 500):
                 total))
 
 	# evaluate on test set
-        test_loss = 0
-        test_correct = 0
-        total = 0
-        for i, data in enumerate(testloader):
-            with torch.no_grad():
-                img, label = data[0].cuda(), data[1].cuda()
-                batch_size = img.size(0)
-                _, concat_logits, _, _, _ = net(img)
+            test_loss = 0
+            test_correct = 0
+            total = 0
+            for i, data in enumerate(testloader):
+                with torch.no_grad():
+                    img, label = data[0].cuda(), data[1].cuda()
+                    batch_size = img.size(0)
+                    _, concat_logits, _, _, _ = net(img)
                 # calculate loss
-                concat_loss = creterion(concat_logits, label)
+                    concat_loss = creterion(concat_logits, label)
                 # calculate accuracy
-                _, concat_predict = torch.max(concat_logits, 1)
-                total += batch_size
-                test_correct += torch.sum(concat_predict.data == label.data)
-                test_loss += concat_loss.item() * batch_size
-                progress_bar(i, len(testloader), 'eval test set')
+                    _, concat_predict = torch.max(concat_logits, 1)
+                    total += batch_size
+                    test_correct += torch.sum(concat_predict.data == label.data)
+                    test_loss += concat_loss.item() * batch_size
+                    progress_bar(i, len(testloader), 'eval test set')
 
-        test_acc = float(test_correct) / total
-        test_loss = test_loss / total
-        _print(
+            test_acc = float(test_correct) / total
+            test_loss = test_loss / total
+            _print(
             'epoch:{} - test loss: {:.3f} and test acc: {:.3f} total sample: {}'.format(
                 epoch,
                 test_loss,
@@ -210,10 +250,10 @@ for epoch in range(start_epoch, 500):
                 total))
 
 	# save model
-        net_state_dict = net.module.state_dict()
-        if not os.path.exists(save_dir):
-            os.mkdir(save_dir)
-        torch.save({
+            net_state_dict = net.module.state_dict()
+            if not os.path.exists(save_dir):
+                os.mkdir(save_dir)
+            torch.save({
             'epoch': epoch,
             'train_loss': train_loss,
             'train_acc': train_acc,
@@ -221,5 +261,7 @@ for epoch in range(start_epoch, 500):
             'test_acc': test_acc,
             'net_state_dict': net_state_dict},
             os.path.join(save_dir, '%03d.ckpt' % epoch))
+
+entrenamiento(start_epoch, _print, trainloader, testloader, net, creterion, raw_optimizer, concat_optimizer, part_optimizer, partcls_optimizer, schedulers, device)
 
 print('finishing training')
