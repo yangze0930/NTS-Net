@@ -1,5 +1,6 @@
 import numpy as np
-import scipy.misc
+#import scipy.misc
+import imageio
 import os
 from PIL import Image
 from torchvision import transforms
@@ -25,11 +26,12 @@ class CUB():
         train_file_list = [x for i, x in zip(train_test_list, img_name_list) if i]
         test_file_list = [x for i, x in zip(train_test_list, img_name_list) if not i]
         if self.is_train:
-            self.train_img = [scipy.misc.imread(os.path.join(self.root, 'images', train_file)) for train_file in
+            #se cambió scipy.misc.imread por imageio.imread
+            self.train_img = [imageio.imread(os.path.join(self.root, 'images', train_file)) for train_file in
                               train_file_list[:data_len]]
             self.train_label = [x for i, x in zip(train_test_list, label_list) if i][:data_len]
         if not self.is_train:
-            self.test_img = [scipy.misc.imread(os.path.join(self.root, 'images', test_file)) for test_file in
+            self.test_img = [imageio.imread(os.path.join(self.root, 'images', test_file)) for test_file in
                              test_file_list[:data_len]]
             self.test_label = [x for i, x in zip(train_test_list, label_list) if not i][:data_len]
 
@@ -53,6 +55,7 @@ class CUB():
             img = transforms.Resize((600, 600), Image.BILINEAR)(img)
             img = transforms.CenterCrop(INPUT_SIZE)(img)
             img = transforms.ToTensor()(img)
+            
             img = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])(img)
 
         return img, target

@@ -4,7 +4,20 @@ import sys
 import time
 import logging
 
+import time
+
+def timer(func):
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        rv = func(*args, **kwargs)
+        total = time.time() - start
+        print(f'Total: {total}')
+        return rv
+    return wrapper
+
+
 _, term_width = os.popen('stty size', 'r').read().split()
+#term_width = 80
 term_width = int(term_width)
 
 TOTAL_BAR_LENGTH = 40.
@@ -99,6 +112,20 @@ def init_log(output_dir):
     console.setLevel(logging.INFO)
     logging.getLogger('').addHandler(console)
     return logging
+
+#se agrega para crear las carpetas con los permisos correspondientes
+def create_dir(dir_str):
+
+    try:
+        pardir = os.path.abspath(f'{dir_str}')
+        original_umask  = os.umask(0o000)
+        os.makedirs(pardir,exist_ok=True)
+        
+    finally:
+        os.umask(original_umask)
+        print(f'{dir_str} folder created:', os.path.isdir(pardir))
+
+    return os.path.abspath('./save_dir')
 
 if __name__ == '__main__':
     pass
